@@ -41,6 +41,11 @@ except ImportError:
         raise EnvironmentError('You need to install eventlet or gevent')
 
 
+try:
+    from http.client import responses
+except ImportError:
+    from httplib import responses
+
 from . import version
 
 import re
@@ -356,15 +361,7 @@ class WebMessageHandler(MessageHandler):
     _NOT_ALLOWED = 405
     _SERVER_ERROR = 500
 
-    _response_codes = {
-        200: 'OK',
-        400: 'Bad request',
-        401: 'Authentication failed',
-        403: 'Forbidden',
-        404: 'Not found',
-        405: 'Method not allowed',
-        500: 'Server error',
-    }
+    _response_codes = responses
 
     ###
     ### Payload extension
