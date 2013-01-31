@@ -1,4 +1,6 @@
+from brubeck.request_handling import ResponseException
 from brubeck.queryset.base import AbstractQueryset
+
 
 class DictQueryset(AbstractQueryset):
     """This class exists as an example of how one could implement a Queryset.
@@ -32,7 +34,6 @@ class DictQueryset(AbstractQueryset):
     def read_all(self):
         return [(self.MSG_OK, datum) for datum in self.db_conn.values()]
 
-
     def read_one(self, iid):
         iid = str(iid)  # TODO Should be cleaner
         if iid in self.db_conn:
@@ -60,10 +61,9 @@ class DictQueryset(AbstractQueryset):
             datum = self.db_conn[item_id]
             del self.db_conn[item_id]
         except KeyError:
-            raise FourOhFourException
+            raise ResponseException(404)
         return (self.MSG_UPDATED, datum)
 
     def destroy_many(self, ids):
         statuses = [self.destroy_one(iid) for iid in ids]
         return statuses
-

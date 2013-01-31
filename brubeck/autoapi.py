@@ -1,6 +1,4 @@
-from request_handling import JSONMessageHandler, FourOhFourException
-
-from dictshield.base import ShieldException
+from request_handling import JSONMessageHandler
 
 import ujson as json
 
@@ -242,36 +240,31 @@ class AutoAPIBase(JSONMessageHandler):
 
         Data: N/A
         """
-        
-        try:
-            ### Setup environment
-            is_list = isinstance(ids, list)
-            
-            # Convert arguments
-            (valid, data) = self._convert_item_or_list(ids, is_list,
-                                                       self._convert_to_id)
+        ### Setup environment
+        is_list = isinstance(ids, list)
 
-            # CRUD stuff
-            if is_list:
-                valid_ids = list()
-                errors_ids = list()
-                for status in data:
-                    (is_valid, idd) = status
-                    if is_valid:
-                        valid_ids.append(idd)
-                    else:
-                        error_ids.append(idd)
-                models = self.queries.read(valid_ids)
-                response_data = models
-            else:
-                datum_tuple = self.queries.read(data)
-                response_data = datum_tuple
-            # Handle status update
-            return self._generate_response(response_data)
-        
-        except FourOhFourException:
-            return self.render(status_code=self._NOT_FOUND)
-        
+        # Convert arguments
+        (valid, data) = self._convert_item_or_list(ids, is_list,
+                                                   self._convert_to_id)
+
+        # CRUD stuff
+        if is_list:
+            valid_ids = list()
+            error_ids = list()
+            for status in data:
+                (is_valid, idd) = status
+                if is_valid:
+                    valid_ids.append(idd)
+                else:
+                    error_ids.append(idd)
+            models = self.queries.read(valid_ids)
+            response_data = models
+        else:
+            datum_tuple = self.queries.read(data)
+            response_data = datum_tuple
+        # Handle status update
+        return self._generate_response(response_data)
+
     def post(self, ids=""):
         """HTTP POST implementation.
 
@@ -378,10 +371,6 @@ class AutoAPIBase(JSONMessageHandler):
 
         if ids:
             item_ids = ids.split(self.application.MULTIPLE_ITEM_SEP)
-            try:
-                crud_statuses = self.queries.destroy(item_ids)
-            except FourOhFourException:
-                return self.render(status_code=self._NOT_FOUND)
-            
+            crud_statuses = self.queries.destroy(item_ids)
+
         return self._generate_response(crud_statuses)
-        

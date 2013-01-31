@@ -24,7 +24,6 @@ from brubeck.queryset import DictQueryset, AbstractQueryset, RedisQueryset
 
 from dictshield.document import Document
 from dictshield.fields import StringField
-from brubeck.request_handling import FourOhFourException
 
 ##TestDocument
 class TestDoc(Document):
