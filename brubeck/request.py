@@ -5,6 +5,12 @@ import logging
 import urlparse
 import re
 
+try:
+    from collections import OrderedDict
+except:
+    from ordereddict import OrderedDict
+
+
 def parse_netstring(ns):
     length, rest = ns.split(':', 1)
     length = int(length)
@@ -90,7 +96,7 @@ class Request(object):
                 continue
             #headers = HTTPHeaders.parse(part[:eoh].decode("utf-8"))
             header_string = part[:eoh].decode("utf-8")
-            headers = dict()
+            headers = Headers()
             last_key = ''
             for line in header_string.splitlines():
                 if line[0].isspace():
@@ -193,7 +199,7 @@ class Request(object):
         sender, conn_id, path, rest = msg.split(' ', 3)
         headers, rest = parse_netstring(rest)
         body, _ = parse_netstring(rest)
-        headers = json.loads(headers)
+        headers = Headers(json.loads(headers))
         # construct url from request
         scheme = headers.get('URL_SCHEME', 'http')
         netloc = headers.get('host')
@@ -216,9 +222,8 @@ class Request(object):
             body = environ["wsgi.input"].read(int(environ['CONTENT_LENGTH']))
             del environ["CONTENT_LENGTH"]
             del environ["wsgi.input"]
-        #setting headers to environ dict with no manipulation
-        headers = environ
-        # normalize request dict
+        # normalize environ dict
+        headers = Headers(environ)
         if 'REQUEST_METHOD' in headers:
             headers['METHOD'] = headers['REQUEST_METHOD']
         if 'QUERY_STRING' in headers:
@@ -294,3 +299,37 @@ class Request(object):
         if not args:
             return default
         return args[-1]
+
+
+class Headers(OrderedDict):
+    """Ordered dictionary with case insensitive lookup that preserves original
+    case when listing.
+    """
+
+    class CaseInsensitiveString(str):
+        def __hash__(self):
+            return hash(self.lower())
+
+        def __eq__(self, other):
+            return self.lower() == other.lower()
+
+    def __keytransform__(self, key):
+        return self.CaseInsensitiveString(key)
+
+    def __contains__(self, key):
+        return super(Headers, self).__contains__(self.__keytransform__(key))
+
+    def __getitem__(self, key):
+        return super(Headers, self).__getitem__(self.__keytransform__(key))
+
+    def __setitem__(self, key, value):
+        return super(Headers, self).__setitem__(self.__keytransform__(key), value)
+
+    def __delitem__(self, key):
+        return super(Headers, self).__delitem__(self.__keytransform__(key))
+
+    def has_key(self, key):
+        return super(Headers, self).has_key(self.__keytransform__(key))
+
+    def get(self, key, *args):
+        return super(Headers, self).get(self.__keytransform__(key), *args)
