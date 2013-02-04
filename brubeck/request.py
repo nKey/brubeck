@@ -17,6 +17,7 @@ def parse_netstring(ns):
     assert rest[length] == ',', "Netstring did not end in ','"
     return rest[:length], rest[length + 1:]
 
+
 def to_bytes(data, enc='utf8'):
     """Convert anything to bytes
     """
@@ -27,6 +28,16 @@ def to_unicode(s, enc='utf8'):
     """Convert anything to unicode
     """
     return s if isinstance(s, unicode) else unicode(str(s), encoding=enc)
+
+
+def uncgi(headers):
+    """Cleaned up WSGI headers
+    """
+    new_headers = Headers()
+    for key, value in headers.iteritems():
+        if key.upper().startswith('HTTP_'):
+            new_headers[key[5:].replace('_', '-')] = value
+    return new_headers
 
 
 class Request(object):
@@ -224,17 +235,12 @@ class Request(object):
             del environ["wsgi.input"]
         # normalize environ dict
         headers = Headers(environ)
+        headers.update(uncgi(environ))
         if 'REQUEST_METHOD' in headers:
             headers['METHOD'] = headers['REQUEST_METHOD']
         if 'QUERY_STRING' in headers:
             headers['QUERY'] = headers['QUERY_STRING']
-        if 'CONTENT_TYPE' in headers:
-            headers['content-type'] = headers['CONTENT_TYPE']
-        headers['version'] = 1.1  #TODO: hardcoded!
-        if 'HTTP_COOKIE' in headers:
-            headers['cookie'] = headers['HTTP_COOKIE']
-        if 'HTTP_CONNECTION' in headers:
-            headers['connection'] = headers['HTTP_CONNECTION']
+        headers['VERSION'] = headers.get('SERVER_PROTOCOL', 'HTTP/1.1')
         # construct url from request
         scheme = headers['wsgi.url_scheme']
         netloc = headers.get('HTTP_HOST')
