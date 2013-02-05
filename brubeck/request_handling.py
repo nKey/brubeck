@@ -73,8 +73,17 @@ HTTP_METHODS = ['get', 'post', 'put', 'delete',
 HTTP_FORMAT = "HTTP/1.1 %(code)s %(status)s\r\n%(headers)s\r\n\r\n%(body)s"
 
 
-class FourOhFourException(Exception):
-    pass
+class ResponseException(Exception):
+    def __init__(self, status_code, payload=None, handler=None):
+        """Handler methods can raise this to render response messages.
+        `status_code` to be used on the response.
+        `payload` optional message to be used on the response.
+        `handler` optional function to be called before rendering the response.
+        """
+        super(ResponseException, self).__init__(self)
+        self.status_code = status_code
+        self.payload = payload
+        self.handler = handler
 
 
 ###
@@ -345,6 +354,12 @@ class MessageHandler(object):
                     if rendered is None:
                         logging.debug('Handler had no return value: %s' % fun)
                         return ''
+                except ResponseException, e:
+                    if e.payload:
+                        self.add_to_payload('data', e.payload)
+                    if e.handler:
+                        e.handler()
+                    rendered = self.render(e.status_code)
                 except Exception, e:
                     logging.error(e, exc_info=True)
                     rendered = self.error(e)
