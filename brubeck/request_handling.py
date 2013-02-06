@@ -407,7 +407,9 @@ class WebMessageHandler(MessageHandler):
     def options(self, *args, **kwargs):
         """Default to allowing all of the methods you have defined and public
         """
-        self.headers["Access-Control-Allow-Methods"] = self.supported_methods
+        methods = str.join(', ', map(str.upper, self.supported_methods))
+        self.headers['Allow'] = methods
+        self.headers['Access-Control-Allow-Methods'] = methods
         self.set_status(200)
         return self.render()
 
