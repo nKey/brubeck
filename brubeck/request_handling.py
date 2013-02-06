@@ -401,9 +401,38 @@ class WebMessageHandler(MessageHandler):
             self.headers = headers
 
     ###
+    ### CORS support
+    ###
+    def cors_allowed_origins(self):
+        """Return a list of allowed origins for CORS requests"""
+        return ['*']
+
+    def cors_allowed_methods(self):
+        """Default to allow all supported methods"""
+        return map(str.upper, self.supported_methods)
+
+    def cors_allowed_headers(self):
+        """Default to allow Authorization header"""
+        return ['Authorization']
+
+    def cors_allow_credentials(self):
+        """Default to allow credentials"""
+        return True
+
+    def cors_verify_origin(self, origin):
+        allowed = self.cors_allowed_origins()
+        return origin and ('*' in allowed or origin in allowed)
+
+    def cors_verify_method(self, request_method):
+        return request_method in self.cors_allowed_methods
+
+    def cors_verify_headers(self, fields):
+        allowed = map(str.lower, self.cors_allowed_headers())
+        return all(f.lower() in allowed for f in fields)
+
+    ###
     ### Supported HTTP request methods are mapped to these functions
     ###
-
     def options(self, *args, **kwargs):
         """Default to allowing all of the methods you have defined and public
         """
