@@ -430,17 +430,8 @@ class WebMessageHandler(MessageHandler):
         allowed = map(str.lower, self.cors_allowed_headers())
         return all(f.lower() in allowed for f in fields)
 
-    ###
-    ### Supported HTTP request methods are mapped to these functions
-    ###
-    def options(self, *args, **kwargs):
-        """Default to allowing all of the methods you have defined and public
-        """
-        methods = str.join(', ', map(str.upper, self.supported_methods))
-        self.headers['Allow'] = methods
-        self.set_status(200)
-
-        # handle CORS preflight
+    def cors_preflight(self):
+        """Handle CORS preflight"""
         request_headers = self.message.headers
         origin = request_headers.get('Origin')
         request_method = request_headers.get('Access-Control-Request-Method')
@@ -466,6 +457,36 @@ class WebMessageHandler(MessageHandler):
                 # only non-credential request allows response with wildcard
                 self.headers['Access-Control-Allow-Origin'] = '*'
 
+    def cors_request(self):
+        """Handle CORS request"""
+        request_headers = self.message.headers
+        origin = request_headers.get('Origin')
+        if (self.cors_verify_origin(origin)):
+            self.headers['Access-Control-Allow-Origin'] = origin
+            allowed_origins = self.cors_allowed_origins()
+            if self.cors_allow_credentials():
+                self.headers['Access-Control-Allow-Credentials'] = 'true'
+                if '*' in allowed_origins or len(allowed_origins) > 1:
+                    self.headers['Vary'] = 'Origin'
+            elif '*' in allowed_origins:
+                # only non-credential request allows response with wildcard
+                self.headers['Access-Control-Allow-Origin'] = '*'
+
+            allowed_headers = self.cors_allowed_headers()
+            if allowed_headers:
+                self.headers['Access-Control-Expose-Headers'] = str.join(', ',
+                    allowed_headers)
+
+    ###
+    ### Supported HTTP request methods are mapped to these functions
+    ###
+    def options(self, *args, **kwargs):
+        """Default to allowing all of the methods you have defined and public
+        """
+        methods = str.join(', ', map(str.upper, self.supported_methods))
+        self.headers['Allow'] = methods
+        self.cors_preflight()
+        self.set_status(200)
         return self.render()
 
     def unsupported(self, *args, **kwargs):
@@ -604,6 +625,7 @@ class WebMessageHandler(MessageHandler):
             status_code = 200
 
         self.convert_cookies()
+        self.cors_request()
 
         response = render(self.body, status_code, self.status_msg, self.headers)
 
@@ -625,6 +647,7 @@ class JSONMessageHandler(WebMessageHandler):
             self.set_status(status_code)
 
         self.convert_cookies()
+        self.cors_request()
 
         self.headers['Content-Type'] = 'application/json'
 
