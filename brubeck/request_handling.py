@@ -459,6 +459,9 @@ class WebMessageHandler(MessageHandler):
 
     def cors_request(self):
         """Handle CORS request"""
+        if self.headers.get('Access-Control-Allow-Methods'):
+            # already handled in preflight
+            return
         request_headers = self.message.headers
         origin = request_headers.get('Origin')
         if (self.cors_verify_origin(origin)):
