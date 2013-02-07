@@ -424,7 +424,7 @@ class WebMessageHandler(MessageHandler):
         return origin and ('*' in allowed or origin in allowed)
 
     def cors_verify_method(self, request_method):
-        return request_method in self.cors_allowed_methods
+        return request_method in self.cors_allowed_methods()
 
     def cors_verify_headers(self, fields):
         allowed = map(str.lower, self.cors_allowed_headers())
