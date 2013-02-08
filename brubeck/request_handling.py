@@ -412,8 +412,12 @@ class WebMessageHandler(MessageHandler):
         return map(str.upper, self.supported_methods)
 
     def cors_allowed_headers(self):
-        """Default to allow Authorization header"""
-        return ['Authorization']
+        """Default to allow some common request headers"""
+        return ['Accept', 'Authorization', 'Origin']
+
+    def cors_exposed_headers(self):
+        """Default to allow authentication"""
+        return ['WWW-Authenticate']
 
     def cors_allow_credentials(self):
         """Default to allow credentials"""
@@ -475,10 +479,10 @@ class WebMessageHandler(MessageHandler):
                 # only non-credential request allows response with wildcard
                 self.headers['Access-Control-Allow-Origin'] = '*'
 
-            allowed_headers = self.cors_allowed_headers()
-            if allowed_headers:
+            exposed_headers = self.cors_exposed_headers()
+            if exposed_headers:
                 self.headers['Access-Control-Expose-Headers'] = str.join(', ',
-                    allowed_headers)
+                    exposed_headers)
 
     ###
     ### Supported HTTP request methods are mapped to these functions
