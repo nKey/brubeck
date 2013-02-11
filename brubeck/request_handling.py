@@ -405,7 +405,7 @@ class WebMessageHandler(MessageHandler):
     ###
     def cors_allowed_origins(self):
         """Return a list of allowed origins for CORS requests"""
-        return ['*']
+        return []
 
     def cors_allowed_methods(self):
         """Default to allow all supported methods"""
