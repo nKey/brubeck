@@ -400,6 +400,12 @@ class WebMessageHandler(MessageHandler):
         if headers is not None:
             self.headers = headers
 
+    def prepare(self):
+        """Quit early to avoid processing invalid requests.
+        """
+        if self.cors_request() == False:
+            self._finished = True
+
     ###
     ### CORS support
     ###
@@ -462,11 +468,12 @@ class WebMessageHandler(MessageHandler):
             elif '*' in allowed_origins:
                 # only non-credential request allows response with wildcard
                 self.headers['Access-Control-Allow-Origin'] = '*'
+            return True
 
     def cors_request(self):
         """Handle CORS request"""
         if self.message.method.lower() == 'options':
-            # already handled in preflight
+            # handled in preflight
             return
         request_headers = self.message.headers
         origin = request_headers.get('Origin')
@@ -483,6 +490,10 @@ class WebMessageHandler(MessageHandler):
             if exposed_headers:
                 self.headers['Access-Control-Expose-Headers'] = str.join(', ',
                     exposed_headers)
+            return True
+        elif origin:
+            # origin is set but did not pass validation
+            return False
 
     ###
     ### Supported HTTP request methods are mapped to these functions
@@ -632,7 +643,6 @@ class WebMessageHandler(MessageHandler):
             status_code = 200
 
         self.convert_cookies()
-        self.cors_request()
 
         response = render(self.body, status_code, self.status_msg, self.headers)
 
@@ -654,7 +664,6 @@ class JSONMessageHandler(WebMessageHandler):
             self.set_status(status_code)
 
         self.convert_cookies()
-        self.cors_request()
 
         self.headers['Content-Type'] = 'application/json'
 
