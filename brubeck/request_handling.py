@@ -404,23 +404,27 @@ class WebMessageHandler(MessageHandler):
     ### CORS support
     ###
     def cors_allow_origin(self):
-        """Return a list of allowed origins for CORS requests"""
+        """List of hosts allowed to make CORS requests to this handler."""
         return []
 
     def cors_allow_methods(self):
-        """Default to allow all supported methods"""
+        """List of HTTP methods that are exposed to CORS requests.
+        Default is to allow all implemented methods.
+        """
         return map(str.upper, self.supported_methods)
 
     def cors_allow_headers(self):
-        """Default to allow some common request headers"""
+        """List of headers you allow the client to send in the request.
+        We whitelist some simple headers to work with Webkit implementation.
+        """
         return ['Accept', 'Authorization', 'Origin']
 
     def cors_expose_headers(self):
-        """Default to allow authentication"""
-        return ['WWW-Authenticate']
+        """List of response headers you want the client to have access to."""
+        return []
 
     def cors_allow_credentials(self):
-        """Default to allow credentials"""
+        """Whether the service accepts cookies and auth set on the request."""
         return True
 
     def cors_verify_origin(self, origin):
@@ -455,8 +459,6 @@ class WebMessageHandler(MessageHandler):
             allowed_origins = self.cors_allow_origin()
             if self.cors_allow_credentials():
                 self.headers['Access-Control-Allow-Credentials'] = 'true'
-                if '*' in allowed_origins or len(allowed_origins) > 1:
-                    self.headers['Vary'] = 'Origin'
             elif '*' in allowed_origins:
                 # only non-credential request allows response with wildcard
                 self.headers['Access-Control-Allow-Origin'] = '*'
@@ -473,8 +475,6 @@ class WebMessageHandler(MessageHandler):
             allowed_origins = self.cors_allow_origin()
             if self.cors_allow_credentials():
                 self.headers['Access-Control-Allow-Credentials'] = 'true'
-                if '*' in allowed_origins or len(allowed_origins) > 1:
-                    self.headers['Vary'] = 'Origin'
             elif '*' in allowed_origins:
                 # only non-credential request allows response with wildcard
                 self.headers['Access-Control-Allow-Origin'] = '*'
