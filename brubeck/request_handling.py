@@ -403,19 +403,19 @@ class WebMessageHandler(MessageHandler):
     ###
     ### CORS support
     ###
-    def cors_allowed_origins(self):
+    def cors_allow_origin(self):
         """Return a list of allowed origins for CORS requests"""
         return []
 
-    def cors_allowed_methods(self):
+    def cors_allow_methods(self):
         """Default to allow all supported methods"""
         return map(str.upper, self.supported_methods)
 
-    def cors_allowed_headers(self):
+    def cors_allow_headers(self):
         """Default to allow some common request headers"""
         return ['Accept', 'Authorization', 'Origin']
 
-    def cors_exposed_headers(self):
+    def cors_expose_headers(self):
         """Default to allow authentication"""
         return ['WWW-Authenticate']
 
@@ -424,14 +424,14 @@ class WebMessageHandler(MessageHandler):
         return True
 
     def cors_verify_origin(self, origin):
-        allowed = self.cors_allowed_origins()
+        allowed = self.cors_allow_origin()
         return origin and ('*' in allowed or origin in allowed)
 
     def cors_verify_method(self, request_method):
-        return request_method in self.cors_allowed_methods()
+        return request_method in self.cors_allow_methods()
 
     def cors_verify_headers(self, fields):
-        allowed = map(str.lower, self.cors_allowed_headers())
+        allowed = map(str.lower, self.cors_allow_headers())
         return all(f.lower() in allowed for f in fields)
 
     def cors_preflight(self):
@@ -448,11 +448,11 @@ class WebMessageHandler(MessageHandler):
 
             self.headers['Access-Control-Allow-Origin'] = origin
             self.headers['Access-Control-Allow-Methods'] = str.join(', ',
-                self.cors_allowed_methods())
+                self.cors_allow_methods())
             self.headers['Access-Control-Allow-Headers'] = str.join(', ',
-                self.cors_allowed_headers())
+                self.cors_allow_headers())
 
-            allowed_origins = self.cors_allowed_origins()
+            allowed_origins = self.cors_allow_origin()
             if self.cors_allow_credentials():
                 self.headers['Access-Control-Allow-Credentials'] = 'true'
                 if '*' in allowed_origins or len(allowed_origins) > 1:
@@ -470,7 +470,7 @@ class WebMessageHandler(MessageHandler):
         origin = request_headers.get('Origin')
         if (self.cors_verify_origin(origin)):
             self.headers['Access-Control-Allow-Origin'] = origin
-            allowed_origins = self.cors_allowed_origins()
+            allowed_origins = self.cors_allow_origin()
             if self.cors_allow_credentials():
                 self.headers['Access-Control-Allow-Credentials'] = 'true'
                 if '*' in allowed_origins or len(allowed_origins) > 1:
@@ -479,7 +479,7 @@ class WebMessageHandler(MessageHandler):
                 # only non-credential request allows response with wildcard
                 self.headers['Access-Control-Allow-Origin'] = '*'
 
-            exposed_headers = self.cors_exposed_headers()
+            exposed_headers = self.cors_expose_headers()
             if exposed_headers:
                 self.headers['Access-Control-Expose-Headers'] = str.join(', ',
                     exposed_headers)
