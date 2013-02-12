@@ -404,6 +404,7 @@ class WebMessageHandler(MessageHandler):
         """Quit early to avoid processing invalid requests.
         """
         if self.cors_request() == False:
+            self.set_status(403, status_msg='Invalid CORS request')
             self._finished = True
 
     ###
@@ -481,7 +482,6 @@ class WebMessageHandler(MessageHandler):
             return self.cors_preflight()
         # validate origin
         if not self.cors_verify_origin(origin):
-            self.set_status(403)
             return False
         # set response headers
         self.headers['Access-Control-Allow-Origin'] = origin
