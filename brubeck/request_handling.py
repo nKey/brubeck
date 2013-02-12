@@ -449,7 +449,7 @@ class WebMessageHandler(MessageHandler):
         request_headers = self.message.headers
         origin = request_headers.get('Origin')
         request_method = request_headers.get('Access-Control-Request-Method')
-        field_names = request_headers.get('Access-Control-Request-Headers')
+        field_names = request_headers.get('Access-Control-Request-Headers', '')
         field_names = [f.strip() for f in field_names.split(',') if field_names]
         # validate headers
         if (self.cors_verify_origin(origin) and
