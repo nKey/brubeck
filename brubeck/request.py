@@ -37,6 +37,8 @@ def uncgi(headers):
     for key, value in headers.iteritems():
         if key.upper().startswith('HTTP_'):
             new_headers[key[5:].replace('_', '-')] = value
+        elif '_' in key:
+            new_headers[key.replace('_', '-')] = value
     return new_headers
 
 
