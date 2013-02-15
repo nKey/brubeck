@@ -412,14 +412,111 @@ class WebMessageHandler(MessageHandler):
         if headers is not None:
             self.headers = headers
 
+    def prepare(self):
+        """Quit early to avoid processing invalid requests.
+        """
+        if self.cors_request() == False:
+            self.set_status(403, status_msg='Invalid CORS request')
+            self._finished = True
+
+    ###
+    ### CORS support
+    ###
+    def cors_allow_origin(self):
+        """List of hosts allowed to make CORS requests to this handler."""
+        return []
+
+    def cors_allow_methods(self):
+        """List of HTTP methods that are exposed to CORS requests.
+        Default is to allow all implemented methods.
+        """
+        return map(str.upper, self.supported_methods)
+
+    def cors_allow_headers(self):
+        """List of headers you allow the client to send in the request.
+        We whitelist some simple headers to work with Webkit implementation.
+        """
+        return ['Accept', 'Authorization', 'Origin']
+
+    def cors_expose_headers(self):
+        """List of response headers you want the client to have access to."""
+        return []
+
+    def cors_allow_credentials(self):
+        """Whether the service accepts cookies and auth set on the request."""
+        return True
+
+    def cors_verify_origin(self, origin):
+        allowed = self.cors_allow_origin()
+        return origin and ('*' in allowed or origin in allowed)
+
+    def cors_verify_method(self, request_method):
+        return request_method in self.cors_allow_methods()
+
+    def cors_verify_headers(self, fields):
+        allowed = map(str.lower, self.cors_allow_headers())
+        return all(f.lower() in allowed for f in fields)
+
+    def cors_preflight(self):
+        """Handle CORS preflight"""
+        request_headers = self.message.headers
+        origin = request_headers.get('Origin')
+        request_method = request_headers.get('Access-Control-Request-Method')
+        field_names = request_headers.get('Access-Control-Request-Headers', '')
+        field_names = [f.strip() for f in field_names.split(',') if field_names]
+        # validate headers
+        if (self.cors_verify_origin(origin) and
+            self.cors_verify_method(request_method) and
+            self.cors_verify_headers(field_names)):
+            # set response headers
+            self.headers['Access-Control-Allow-Origin'] = origin
+            self.headers['Access-Control-Allow-Methods'] = str.join(', ',
+                self.cors_allow_methods())
+            self.headers['Access-Control-Allow-Headers'] = str.join(', ',
+                self.cors_allow_headers())
+            allow_origin = self.cors_allow_origin()
+            if self.cors_allow_credentials():
+                self.headers['Access-Control-Allow-Credentials'] = 'true'
+            elif '*' in allow_origin:
+                # only non-credential request allows response with wildcard
+                self.headers['Access-Control-Allow-Origin'] = '*'
+            return True
+
+    def cors_request(self):
+        """Handle CORS request"""
+        request_headers = self.message.headers
+        origin = request_headers.get('Origin')
+        # ignore non-CORS requests
+        if not origin:
+            return
+        # handle preflight
+        if self.message.method.lower() == 'options':
+            return self.cors_preflight()
+        # validate origin
+        if not self.cors_verify_origin(origin):
+            return False
+        # set response headers
+        self.headers['Access-Control-Allow-Origin'] = origin
+        allow_origin = self.cors_allow_origin()
+        if self.cors_allow_credentials():
+            self.headers['Access-Control-Allow-Credentials'] = 'true'
+        elif '*' in allow_origin:
+            # only non-credential request allows response with wildcard
+            self.headers['Access-Control-Allow-Origin'] = '*'
+        expose_headers = self.cors_expose_headers()
+        if expose_headers:
+            self.headers['Access-Control-Expose-Headers'] = str.join(', ',
+                expose_headers)
+        return True
+
     ###
     ### Supported HTTP request methods are mapped to these functions
     ###
-
     def options(self, *args, **kwargs):
         """Default to allowing all of the methods you have defined and public
         """
-        self.headers["Access-Control-Allow-Methods"] = self.supported_methods
+        methods = str.join(', ', map(str.upper, self.supported_methods))
+        self.headers['Allow'] = methods
         self.set_status(200)
         return self.render()
 
