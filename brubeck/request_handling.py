@@ -51,12 +51,28 @@ import Cookie
 import base64
 import hmac
 import cPickle as pickle
+import functools
 from itertools import chain
 import os, sys
 from dictshield.base import ShieldException
 from request import Request, to_bytes, to_unicode
 
 import ujson as json
+
+###
+### Decorators
+###
+def cors(method):
+    """Decorate request handler methods with this to allow CORS requests to
+    use them. """
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwargs):
+        # quit early to avoid processing invalid requests.
+        if self.cors_request() == False:
+            return self.render_error(self._FORBIDDEN, self.cors_error)
+        return method(self, *args, **kwargs)
+    return wrapper
+
 
 ###
 ### Common helpers
@@ -417,13 +433,6 @@ class WebMessageHandler(MessageHandler):
         if headers is not None:
             self.headers = headers
 
-    def prepare(self):
-        """Quit early to avoid processing invalid requests.
-        """
-        if self.cors_request() == False:
-            self.set_status(403, status_msg='Invalid CORS request')
-            self._finished = True
-
     ###
     ### CORS support
     ###
@@ -497,6 +506,10 @@ class WebMessageHandler(MessageHandler):
             self.headers['Access-Control-Expose-Headers'] = str.join(', ',
                 self.cors_expose_headers)
         return True
+
+    def cors_error(self):
+        """Handler for incorrect CORS requests"""
+        self.set_status(403, status_msg='Invalid CORS request')
 
     ###
     ### Supported HTTP request methods are mapped to these functions
