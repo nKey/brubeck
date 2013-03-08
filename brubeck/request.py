@@ -316,28 +316,67 @@ class Headers(OrderedDict):
 
     class CaseInsensitiveString(str):
         def __hash__(self):
+            """
+            >>> hash(Headers.CaseInsensitiveString('Doc')) == hash('doc')
+            True
+            """
             return hash(self.lower())
 
         def __eq__(self, other):
+            """
+            >>> Headers.CaseInsensitiveString('Doc') == 'doc'
+            True
+            """
             return self.lower() == other.lower()
 
     def __keytransform__(self, key):
         return self.CaseInsensitiveString(key)
 
     def __contains__(self, key):
+        """
+        >>> 'USER-AGENT' in Headers({'User-Agent': 'doctest'})
+        True
+        """
         return super(Headers, self).__contains__(self.__keytransform__(key))
 
     def __getitem__(self, key):
+        """
+        >>> h = Headers({'User-Agent': 'doctest'})
+        >>> h['USER-AGENT']
+        'doctest'
+        """
         return super(Headers, self).__getitem__(self.__keytransform__(key))
 
     def __setitem__(self, key, value):
+        """
+        >>> h = Headers()
+        >>> h['User-Agent'] = 'doctest'
+        >>> h['USER-AGENT']
+        'doctest'
+        """
         return super(Headers, self).__setitem__(self.__keytransform__(key), value)
 
     def __delitem__(self, key):
+        """
+        >>> h = Headers({'User-Agent': 'doctest'})
+        >>> del h['USER-AGENT']
+        >>> 'User-Agent' not in h
+        True
+        """
         return super(Headers, self).__delitem__(self.__keytransform__(key))
 
     def has_key(self, key):
+        """
+        >>> Headers({'User-Agent': 'doctest'}).has_key('USER-AGENT')
+        True
+        """
         return super(Headers, self).has_key(self.__keytransform__(key))
 
     def get(self, key, *args):
+        """
+        >>> Headers({'User-Agent': 'doctest'}).get('USER-AGENT')
+        'doctest'
+        >>> Headers().get('User-Agent', 'doctest')
+        'doctest'
+        """
         return super(Headers, self).get(self.__keytransform__(key), *args)
