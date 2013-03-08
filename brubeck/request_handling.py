@@ -681,7 +681,7 @@ class JSONMessageHandler(WebMessageHandler):
         self.headers['Content-Type'] = 'application/json'
 
         if self.status_code == 204:
-            body = None
+            body = ''
         else:
             if hide_status and 'data' in self._payload:
                 body = json.dumps(self._payload['data'], double_precision=6)
