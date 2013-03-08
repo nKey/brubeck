@@ -59,12 +59,14 @@ from request import Request, to_bytes, to_unicode
 
 import ujson as json
 
+
 ###
 ### Decorators
 ###
 def cors(method):
     """Decorate request handler methods with this to allow CORS requests to
-    use them. """
+    use them."""
+    WebMessageHandler.cors_allow_methods.add(method.__name__)
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         # quit early to avoid processing invalid requests.
