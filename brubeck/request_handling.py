@@ -486,8 +486,7 @@ class WebMessageHandler(MessageHandler):
 
     def cors_request(self):
         """Handle CORS request"""
-        request_headers = self.message.headers
-        origin = request_headers.get('Origin')
+        origin = self.message.headers.get('Origin')
         # ignore non-CORS requests
         if not origin:
             return
