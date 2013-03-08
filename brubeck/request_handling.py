@@ -680,10 +680,13 @@ class JSONMessageHandler(WebMessageHandler):
 
         self.headers['Content-Type'] = 'application/json'
 
-        if hide_status and 'data' in self._payload:
-            body = json.dumps(self._payload['data'], double_precision=6)
+        if self.status_code == 204:
+            body = None
         else:
-            body = json.dumps(self._payload, double_precision=6)
+            if hide_status and 'data' in self._payload:
+                body = json.dumps(self._payload['data'], double_precision=6)
+            else:
+                body = json.dumps(self._payload, double_precision=6)
 
         response = render(body, self.status_code, self.status_msg,
                           self.headers)
