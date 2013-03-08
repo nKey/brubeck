@@ -66,7 +66,7 @@ import ujson as json
 def cors(method):
     """Decorate request handler methods with this to allow CORS requests to
     use them."""
-    WebMessageHandler.cors_allow_methods.add(method.__name__)
+    WebMessageHandler.cors_allow_methods.add(method.__name__.upper())
     @functools.wraps(method)
     def wrapper(self, *args, **kwargs):
         # quit early to avoid processing invalid requests.
