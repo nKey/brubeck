@@ -1,4 +1,3 @@
-import cgi
 import json
 import Cookie
 import logging
@@ -43,7 +42,7 @@ class Request(object):
         self.arguments = {}
         if 'QUERY' in self.headers:
             query = self.headers['QUERY']
-            arguments = cgi.parse_qs(query.encode("utf-8"))
+            arguments = urlparse.parse_qs(query.encode("utf-8"))
             for name, values in arguments.iteritems():
                 values = [v for v in values if v]
                 if values:
@@ -53,9 +52,8 @@ class Request(object):
         if self.method in ("POST", "PUT") and self.content_type:
             form_encoding = "application/x-www-form-urlencoded"
             if self.content_type.startswith(form_encoding):
-                arguments = cgi.parse_qs(self.body)
+                arguments = urlparse.parse_qs(self.body, keep_blank_values=True)
                 for name, values in arguments.iteritems():
-                    values = [v for v in values if v]
                     if values:
                         self.arguments.setdefault(name, []).extend(values)
             # Not ready for this, but soon
