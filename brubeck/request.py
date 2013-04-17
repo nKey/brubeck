@@ -72,9 +72,7 @@ class Request(object):
             form_encoding = "application/x-www-form-urlencoded"
             if self.content_type.startswith(form_encoding):
                 arguments = urlparse.parse_qs(self.body, keep_blank_values=True)
-                for name, values in arguments.iteritems():
-                    if values:
-                        self.arguments.setdefault(name, []).extend(values)
+                self.arguments.update(arguments)
             # Not ready for this, but soon
             elif self.content_type.startswith("multipart/form-data"):
                 fields = self.content_type.split(";")
