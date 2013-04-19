@@ -91,7 +91,7 @@ class Request(object):
         if boundary.startswith('"') and boundary.endswith('"'):
             boundary = boundary[1:-1]
         if data.endswith("\r\n"):
-            footer_length = len(boundary) + 6 
+            footer_length = len(boundary) + 6
         else:
             footer_length = len(boundary) + 4
         data = str(data)
@@ -100,7 +100,7 @@ class Request(object):
             if not part:
                 continue
             eoh = part.find("\r\n\r\n")
-            if eoh == -1: 
+            if eoh == -1:
                 logging.warning("multipart/form-data missing headers")
                 continue
             #headers = HTTPHeaders.parse(part[:eoh].decode("utf-8"))
@@ -116,8 +116,8 @@ class Request(object):
                     name, value = line.split(":", 1)
                     last_key = "-".join([w.capitalize() for w in name.split("-")])
                     headers[name] = value.strip()
-    
-            disp_header = headers.get("Content-Disposition", "") 
+
+            disp_header = headers.get("Content-Disposition", "")
             disposition, disp_params = self._parse_header(disp_header)
             if disposition != "form-data" or not part.endswith("\r\n"):
                 logging.warning("Invalid multipart/form-data")
@@ -149,7 +149,7 @@ class Request(object):
 
     def _parse_header(self, line):
         """Parse a Content-type like header.
-            
+
         Return the main content-type and a dictionary of options.
         """
         parts = self._parseparam(';' + line)
@@ -164,7 +164,7 @@ class Request(object):
                     value = value[1:-1]
                     value = value.replace('\\\\', '\\').replace('\\"', '"')
                 pdict[name] = value
-        return key, pdict    
+        return key, pdict
 
     @property
     def method(self):
@@ -191,7 +191,7 @@ class Request(object):
                 try:
                     cookies = self.headers['cookie']
                     self._cookies.load(to_bytes(cookies))
-                except Exception, e:
+                except Exception:
                     logging.error('Failed to load cookies')
                     self.clear_all_cookies()
         return self._cookies
@@ -199,6 +199,11 @@ class Request(object):
     @property
     def url(self):
         return self.url_parts.geturl()
+
+    @property
+    def host(self):
+        return urlparse.urlunsplit(
+            (self.url_parts.scheme, self.url_parts.netloc, '', '', ''))
 
     @staticmethod
     def parse_msg(msg):
