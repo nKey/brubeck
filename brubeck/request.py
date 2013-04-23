@@ -234,7 +234,6 @@ class Request(object):
         body = ""
         if "CONTENT_LENGTH" in environ and environ["CONTENT_LENGTH"]:
             body = environ["wsgi.input"].read(int(environ['CONTENT_LENGTH']))
-            del environ["CONTENT_LENGTH"]
             del environ["wsgi.input"]
         # normalize environ dict
         headers = Headers(environ)
