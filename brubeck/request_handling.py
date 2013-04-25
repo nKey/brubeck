@@ -57,10 +57,7 @@ import base64
 import hmac
 import cPickle as pickle
 import functools
-from itertools import chain
-import os, sys
-from dictshield.base import ShieldException
-from request import Request, to_bytes, to_unicode
+from request import to_bytes
 
 import ujson as json
 
