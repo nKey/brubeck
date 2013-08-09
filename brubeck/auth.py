@@ -13,6 +13,8 @@ import bcrypt
 import functools
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 ###
 ### Password Helpers
@@ -78,7 +80,7 @@ def web_authenticated(method):
                 return self.redirect(self.application.login_url)
             else:
                 error = 'web_authentication called with undefined <login_url>'
-                logging.error(error)
+                logger.error(error)
                 return self.render_error(self._AUTH_FAILURE)
         return method(self, *args, **kwargs)
     return wrapper
