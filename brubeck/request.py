@@ -5,6 +5,9 @@ import logging
 import urlparse
 import re
 
+logger = logging.getLogger(__name__)
+
+
 def parse_netstring(ns):
     length, rest = ns.split(':', 1)
     length = int(length)
@@ -70,7 +73,7 @@ class Request(object):
                                               self.files)
                         break
                 else:
-                    logging.warning("Invalid multipart/form-data")
+                    logger.warning("Invalid multipart/form-data")
 
     def _parse_mime_body(self, boundary, data, arguments, files):
         if boundary.startswith('"') and boundary.endswith('"'):
@@ -86,7 +89,7 @@ class Request(object):
                 continue
             eoh = part.find("\r\n\r\n")
             if eoh == -1: 
-                logging.warning("multipart/form-data missing headers")
+                logger.warning("multipart/form-data missing headers")
                 continue
             #headers = HTTPHeaders.parse(part[:eoh].decode("utf-8"))
             header_string = part[:eoh].decode("utf-8")
@@ -105,11 +108,11 @@ class Request(object):
             disp_header = headers.get("Content-Disposition", "") 
             disposition, disp_params = self._parse_header(disp_header)
             if disposition != "form-data" or not part.endswith("\r\n"):
-                logging.warning("Invalid multipart/form-data")
+                logger.warning("Invalid multipart/form-data")
                 continue
             value = part[eoh + 4:-2]
             if not disp_params.get("name"):
-                logging.warning("multipart/form-data value missing name")
+                logger.warning("multipart/form-data value missing name")
                 continue
             name = disp_params["name"]
             if disp_params.get("filename"):
@@ -177,7 +180,7 @@ class Request(object):
                     cookies = self.headers['cookie']
                     self._cookies.load(to_bytes(cookies))
                 except Exception, e:
-                    logging.error('Failed to load cookies')
+                    logger.error('Failed to load cookies')
                     self.clear_all_cookies()
         return self._cookies
 
@@ -249,7 +252,7 @@ class Request(object):
 
     def is_disconnect(self):
         if self.headers.get('METHOD') == 'JSON':
-            logging.error('DISCONNECT')
+            logger.error('DISCONNECT')
             return self.data.get('type') == 'disconnect'
 
     def should_close(self):

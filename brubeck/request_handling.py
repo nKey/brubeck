@@ -62,6 +62,8 @@ import ujson as json
 ### Common helpers
 ###
 
+logger = logging.getLogger(__name__)
+
 HTTP_METHODS = ['get', 'post', 'put', 'delete',
                 'head', 'options', 'trace', 'connect']
 
@@ -338,10 +340,10 @@ class MessageHandler(object):
                         rendered = fun(*self._url_args)
 
                     if rendered is None:
-                        logging.debug('Handler had no return value: %s' % fun)
+                        logger.debug('Handler had no return value: %s' % fun)
                         return ''
                 except Exception, e:
-                    logging.error(e, exc_info=True)
+                    logger.error(e, exc_info=True)
                     rendered = self.error(e)
 
                 self._finished = True
@@ -423,7 +425,7 @@ class WebMessageHandler(MessageHandler):
     def redirect(self, url):
         """Clears the payload before rendering the error status
         """
-        logging.debug('Redirecting to url: %s' % url)
+        logger.debug('Redirecting to url: %s' % url)
         self.clear_payload()
         self._finished = True
         msg = 'Page has moved to %s' % url
@@ -550,7 +552,7 @@ class WebMessageHandler(MessageHandler):
 
         response = render(self.body, status_code, self.status_msg, self.headers)
 
-        logging.info('%s %s %s (%s)' % (status_code, self.message.method,
+        logger.info('%s %s %s (%s)' % (status_code, self.message.method,
                                         self.message.path,
                                         self.message.remote_addr))
         return response
@@ -579,7 +581,7 @@ class JSONMessageHandler(WebMessageHandler):
         response = render(body, self.status_code, self.status_msg,
                           self.headers)
 
-        logging.info('%s %s %s (%s)' % (self.status_code, self.message.method,
+        logger.info('%s %s %s (%s)' % (self.status_code, self.message.method,
                                         self.message.path,
                                         self.message.remote_addr))
         return response
@@ -651,10 +653,10 @@ class Brubeck(object):
         """
         # All output is sent via logging
         # (while i figure out how to do a good abstraction via zmq)
-        logging.basicConfig(level=log_level)
+        #logging.basicConfig(level=log_level)
 
         # Log whether we're using eventlet or gevent.
-        logging.info('Using coroutine library: %s' % CORO_LIBRARY)
+        logger.info('Using coroutine library: %s' % CORO_LIBRARY)
 
         # Attach the web server connection
         if msg_conn is not None:
