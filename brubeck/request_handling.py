@@ -744,9 +744,8 @@ class Brubeck(object):
 
     def __init__(self, msg_conn=None, handler_tuples=None, pool=None,
                  no_handler=None, base_handler=None, template_loader=None,
-                 log_level=logging.INFO, login_url=None, db_conn=None,
-                 cookie_secret=None, api_base_url=None,
-                 *args, **kwargs):
+                 login_url=None, db_conn=None, cookie_secret=None,
+                 api_base_url=None, *args, **kwargs):
         """Brubeck is a class for managing connections to webservers. It
         supports Mongrel2 and WSGI while providing an asynchronous system for
         managing message handling.
@@ -766,19 +765,12 @@ class Brubeck(object):
         `template_loader` is a function that builds the template loading
         environment.
 
-        `log_level` is a log level mapping to Python's `logging` module's
-        levels.
-
         `login_url` is the default URL for a login screen.
 
         `db_conn` is a database connection to be shared in this process
 
         `cookie_secret` is a string to use for signing secure cookies.
         """
-        # All output is sent via logging
-        # (while i figure out how to do a good abstraction via zmq)
-        #logging.basicConfig(level=log_level)
-
         # Log whether we're using eventlet or gevent.
         logger.info('Using coroutine library: %s' % CORO_LIBRARY)
 
@@ -986,6 +978,7 @@ class Brubeck(object):
         still getting the goodness of asynchronous and nonblocking I/O.
         """
         greeting = 'Brubeck v%s online ]-----------------------------------'
+        logger.info(greeting, version)
         print greeting % version
 
         self.recv_forever_ever()
