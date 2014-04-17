@@ -221,6 +221,27 @@ class Mongrel2Connection(Connection):
         self.reply_bulk(uuid, idents, "")
 
 
+class MultipleMongrel2Connection(Mongrel2Connection):
+
+    def __init__(self, pull_addrs, pub_addrs):
+        zmq = load_zmq()
+        ctx = load_zmq_ctx()
+
+        in_sock = ctx.socket(zmq.PULL)
+        out_sock = ctx.socket(zmq.PUB)
+
+        super(Mongrel2Connection, self).__init__(in_sock, out_sock)
+        self.in_addrs = pull_addrs
+        self.out_addrs = pub_addrs
+
+        for pull_addr in pull_addrs:
+            in_sock.connect(pull_addr)
+
+        out_sock.setsockopt(zmq.IDENTITY, self.sender_id)
+        for pub_addr in pub_addrs:
+            out_sock.connect(pub_addr)
+
+
 ###
 ### WSGI
 ###
