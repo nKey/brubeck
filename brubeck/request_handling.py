@@ -244,7 +244,7 @@ class MessageHandler(object):
 
     @property
     def host(self):
-        return self.application.host_url or self.request.host
+        return self.application.host_url or self.message.host
 
     @property
     def url(self):
