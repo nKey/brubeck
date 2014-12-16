@@ -541,7 +541,7 @@ class WebMessageHandler(MessageHandler):
         return self.render_error(self._NOT_ALLOWED, error_handler=allow_header)
 
     def error(self, err):
-        self.render_error(self._SERVER_ERROR)
+        return self.render_error(self._SERVER_ERROR)
 
     def redirect(self, url):
         """Clears the payload before rendering the error status
