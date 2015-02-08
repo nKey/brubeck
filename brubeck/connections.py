@@ -235,11 +235,13 @@ class MultipleMongrel2Connection(Mongrel2Connection):
         self.out_addrs = pub_addrs
 
         for pull_addr in pull_addrs:
-            in_sock.connect(pull_addr)
+            if pull_addr:
+                in_sock.connect(pull_addr)
 
         out_sock.setsockopt(zmq.IDENTITY, self.sender_id)
         for pub_addr in pub_addrs:
-            out_sock.connect(pub_addr)
+            if pub_addr:
+                out_sock.connect(pub_addr)
 
 
 ###
