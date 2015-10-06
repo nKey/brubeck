@@ -57,6 +57,7 @@ import base64
 import hmac
 import cPickle as pickle
 import functools
+import urlparse
 from request import to_bytes
 
 import ujson as json
@@ -240,6 +241,14 @@ class MessageHandler(object):
         """Called after the message handling method. Counterpart to prepare
         """
         pass
+
+    @property
+    def host(self):
+        return self.application.host_url or self.message.host
+
+    @property
+    def url(self):
+        return urlparse.urljoin(self.host, self.message.url_parts.path)
 
     @property
     def db_conn(self):
@@ -745,7 +754,7 @@ class Brubeck(object):
     def __init__(self, msg_conn=None, handler_tuples=None, pool=None,
                  no_handler=None, base_handler=None, template_loader=None,
                  login_url=None, db_conn=None, cookie_secret=None,
-                 api_base_url=None, *args, **kwargs):
+                 api_base_url=None, host_url=None, *args, **kwargs):
         """Brubeck is a class for managing connections to webservers. It
         supports Mongrel2 and WSGI while providing an asynchronous system for
         managing message handling.
@@ -768,6 +777,8 @@ class Brubeck(object):
         `login_url` is the default URL for a login screen.
 
         `db_conn` is a database connection to be shared in this process
+
+        `host_url` is the application default URL
 
         `cookie_secret` is a string to use for signing secure cookies.
         """
@@ -802,6 +813,9 @@ class Brubeck(object):
 
         # A database connection is optional. The var name is now in place
         self.db_conn = db_conn
+
+        # Host url is optional
+        self.host_url = host_url
 
         # Login url is optional
         self.login_url = login_url
