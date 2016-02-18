@@ -1,3 +1,8 @@
+from .messages import (to_bytes, to_unicode, parse_netstring,
+                       Mongrel2Message, WSGIMessage)
+from . import concurrency
+from .handlers.web import http_render
+
 import ujson as json
 from uuid import uuid4
 import cgi
@@ -5,8 +10,6 @@ import re
 import logging
 import Cookie
 
-from request import to_bytes, to_unicode, parse_netstring, Request
-from request_handling import http_response, coro_spawn
 
 
 ###
@@ -37,7 +40,6 @@ class Connection(object):
         """
         error_msg = 'Subclass of Connection has not implemented `%s()`' % name
         raise NotImplementedError(error_msg)
-
 
     def recv(self):
         """Receives a raw mongrel2.handler.Request object that you
@@ -96,10 +98,9 @@ def load_zmq():
     cache that decision at the module level.
     """
     if not hasattr(load_zmq, '_zmq'):
-        from request_handling import CORO_LIBRARY
-        if CORO_LIBRARY == 'gevent':
-            from gevent_zeromq import zmq
-        elif CORO_LIBRARY == 'eventlet':
+        if concurrency.CORO_LIBRARY == 'gevent':
+            from zmq import green as zmq
+        elif concurrency.CORO_LIBRARY == 'eventlet':
             from eventlet.green import zmq
         load_zmq._zmq = zmq
 
@@ -159,15 +160,15 @@ class Mongrel2Connection(Connection):
 
         The application is responsible for handling misconfigured routes.
         """
-        request = Request.parse_msg(message)
+        request = Mongrel2Message.parse(message)
         if request.is_disconnect():
             return  # Ignore disconnect msgs. Dont have areason to do otherwise
         handler = application.route_message(request)
         result = handler()
 
         if result:
-            http_content = http_response(result['body'], result['status_code'],
-                                         result['status_msg'], result['headers'])
+            http_content = http_render(result['body'], result['status_code'],
+                                       result['status_msg'], result['headers'])
 
             application.msg_conn.reply(request, http_content)
 
@@ -186,7 +187,8 @@ class Mongrel2Connection(Connection):
         def fun_forever():
             while True:
                 request = self.recv()
-                coro_spawn(self.process_message, application, request)
+                concurrency.coro_spawn(self.process_message, application,
+                                       request)
         self._recv_forever_ever(fun_forever)
 
     def send(self, uuid, conn_id, msg):
@@ -257,7 +259,7 @@ class WSGIConnection(Connection):
         self.port = port
 
     def process_message(self, application, environ, callback):
-        request = Request.parse_wsgi_request(environ)
+        request = WSGIMessage.parse(environ)
         handler = application.route_message(request)
         result = handler()
 
@@ -273,18 +275,17 @@ class WSGIConnection(Connection):
         function in a try-except that can be ctrl-c'd.
         """
         def fun_forever():
-            from brubeck.request_handling import CORO_LIBRARY
             print "Serving on port %s..." % (self.port)
 
             def proc_msg(environ, callback):
                 return self.process_message(application, environ, callback)
 
-            if CORO_LIBRARY == 'gevent':
+            if concurrency.CORO_LIBRARY == 'gevent':
                 from gevent import wsgi
                 server = wsgi.WSGIServer(('', self.port), proc_msg)
                 server.serve_forever()
 
-            elif CORO_LIBRARY == 'eventlet':
+            elif concurrency.CORO_LIBRARY == 'eventlet':
                 import eventlet.wsgi
                 server = eventlet.wsgi.server(eventlet.listen(('', self.port)),
                                               proc_msg)
