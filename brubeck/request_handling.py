@@ -448,7 +448,7 @@ class WebMessageHandler(MessageHandler):
         self.headers = dict()
         self.headers['Access-Control-Allow-Origin'] = '*'
         self.headers['Access-Control-Allow-Methods'] = "POST, GET, OPTIONS, DELETE, PUT"
-        self.headers['Access-Control-Allow-Headers'] = "x-requested-with, Content-Type, origin, authorization, accept, client-security-token"
+        self.headers['Access-Control-Allow-Headers'] = "x-requested-with, Content-Type, origin, authorization, accept, client-security-token, token"
 
     def set_body(self, body, headers=None, status_code=_SUCCESS_CODE):
         """
