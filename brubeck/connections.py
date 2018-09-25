@@ -255,9 +255,10 @@ class WSGIConnection(Connection):
     """
     """
 
-    def __init__(self, port=6767):
+    def __init__(self, host='0.0.0.0', port=6767):
         super(WSGIConnection, self).__init__()
         self.port = port
+        self.host = host
 
     def process_message(self, application, environ, callback):
         request = Request.parse_wsgi_request(environ)
@@ -277,19 +278,19 @@ class WSGIConnection(Connection):
         """
         def fun_forever():
             from brubeck.request_handling import CORO_LIBRARY
-            print "Serving on port %s..." % (self.port)
+            print "Serving on host %s port %s..." % (self.host, self.port)
 
             def proc_msg(environ, callback):
                 return self.process_message(application, environ, callback)
 
             if CORO_LIBRARY == 'gevent':
                 from gevent import wsgi
-                server = wsgi.WSGIServer(('', self.port), proc_msg)
+                server = wsgi.WSGIServer((self.host, self.port), proc_msg)
                 server.serve_forever()
 
             elif CORO_LIBRARY == 'eventlet':
                 import eventlet.wsgi
-                server = eventlet.wsgi.server(eventlet.listen(('', self.port)),
+                server = eventlet.wsgi.server(eventlet.listen((self.host, self.port)),
                                               proc_msg)
 
         self._recv_forever_ever(fun_forever)
